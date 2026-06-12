@@ -1,0 +1,27 @@
+{
+  "name": "Калимба — Интерактивная калимба",
+  "short_name": "Калимба",
+  "description": "Играй на калимбе прямо в браузере! 17 клавиш, реалистичный звук, оффлайн работа.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a0f07",
+  "theme_color": "#1a0f07",
+  "orientation": "portrait",
+  "lang": "ru",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
