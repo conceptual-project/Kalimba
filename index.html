@@ -83,7 +83,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 8px 12px;
+      padding: 4px 4px 6px;
       min-height: 0;
     }
 
@@ -91,9 +91,9 @@
     .kalimba-body {
       position: relative;
       width: 100%;
-      max-width: 380px;
-      padding: 12px 8px 16px;
-      border-radius: 24px;
+      max-width: 460px;
+      padding: 10px 4px 14px;
+      border-radius: 20px;
       background:
         repeating-linear-gradient(87deg, transparent 0px, transparent 4px, rgba(0,0,0,0.015) 4px, rgba(0,0,0,0.015) 5px),
         radial-gradient(ellipse at 25% 40%, rgba(139,94,60,0.25), transparent 60%),
@@ -108,8 +108,8 @@
 
     /* ===== BRIDGE BAR ===== */
     .bridge-bar {
-      height: 8px;
-      margin: 0 4px 6px;
+      height: 10px;
+      margin: 0 2px 4px;
       border-radius: 4px;
       background: linear-gradient(180deg, #d4a574, #c49a6c, #a8794c);
       box-shadow:
@@ -120,8 +120,8 @@
     /* ===== TINES ROW ===== */
     .tines-row {
       display: flex;
-      justify-content: center;
-      gap: 1px;
+      justify-content: stretch;
+      gap: 2px;
       padding: 0 2px;
       position: relative;
     }
@@ -131,6 +131,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      flex: 1 1 0;
+      min-width: 0;
       background: none;
       border: none;
       cursor: pointer;
@@ -145,8 +147,10 @@
     }
 
     .tine-bar {
-      width: 18px;
-      border-radius: 0 0 4px 4px;
+      width: 100%;
+      max-width: 26px;
+      min-width: 14px;
+      border-radius: 0 0 5px 5px;
       background: linear-gradient(90deg,
         #b0b0b0 0%, #d0d0d0 12%, #e8e8e8 30%,
         #f8f8f8 50%, #e8e8e8 70%, #d0d0d0 88%, #b0b0b0 100%);
@@ -173,11 +177,11 @@
 
     .tine-glow {
       position: absolute;
-      bottom: -4px;
+      bottom: -6px;
       left: 50%;
       transform: translateX(-50%);
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: radial-gradient(circle, rgba(212,175,55,0.4), transparent 70%);
       opacity: 0;
@@ -188,10 +192,10 @@
 
     /* Tine tip (colored dot) */
     .tine-tip {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      margin-top: 3px;
+      margin-top: 4px;
       transition: transform 0.15s;
       box-shadow: 0 0 4px currentColor;
     }
@@ -199,12 +203,14 @@
 
     /* Note label */
     .tine-note {
-      font-size: 0.55rem;
+      font-size: 0.6rem;
       font-weight: 600;
       color: var(--text-dim);
       margin-top: 4px;
       white-space: nowrap;
       letter-spacing: -0.02em;
+      text-align: center;
+      line-height: 1.1;
       transition: color 0.15s;
     }
     .tine.pressed .tine-note { color: var(--gold-light); }
@@ -217,8 +223,8 @@
       position: relative;
     }
     .sound-hole {
-      width: 56px;
-      height: 56px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       background: radial-gradient(circle at 40% 35%, #2a1506, #0d0705);
       border: 2px solid #3d2211;
@@ -280,7 +286,7 @@
 
     /* ===== NOTE TRAIL ===== */
     .note-trail-wrap {
-      padding: 4px 12px 2px;
+      padding: 2px 8px 2px;
       flex-shrink: 0;
     }
     .note-trail {
@@ -364,12 +370,14 @@
 
     /* ===== RESPONSIVE ===== */
     @media (min-width: 420px) {
-      .tine-bar { width: 20px; }
-      .tine-tip { width: 7px; height: 7px; }
+      .tine-bar { max-width: 28px; }
+      .tine-tip { width: 9px; height: 9px; }
+      .tine-note { font-size: 0.65rem; }
     }
     @media (min-width: 500px) {
-      .tine-bar { width: 22px; }
-      .tine-note { font-size: 0.6rem; }
+      .tine-bar { max-width: 30px; }
+      .tine-note { font-size: 0.7rem; }
+      .sound-hole { width: 72px; height: 72px; }
     }
   </style>
 </head>
@@ -377,7 +385,7 @@
 
   <header class="header">
     <h1>🎵 Калимба</h1>
-    <p>Нажимай на клавиши и играй мелодии!</p>
+    <p>Нажимай клавиши и играй мелодии!</p>
   </header>
 
   <div class="labels-row">
@@ -409,7 +417,7 @@
   </div>
 
   <footer class="footer">
-    Касай клавиш — звучит калимба 🎶
+    Нажимай клавиши — звучит калимба 🎶
   </footer>
 
 <script>
