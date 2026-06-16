@@ -400,7 +400,7 @@
       <div class="tines-row" id="tinesRow"></div>
       <div class="sound-hole-wrap">
         <div class="sound-hole" id="soundHole">
-          <div class="sound-hole-ripple" id="ripple"></div>
+          <!-- ripple elements are created dynamically by triggerRipple() -->
         </div>
       </div>
     </div>
@@ -463,6 +463,14 @@ function noteColor(note) {
   return NOTE_COLORS[note.charAt(0)] || '#888';
 }
 
+// ===================== KEYBOARD MAP =====================
+// Declared up front so it is available both during tine construction (for
+// aria-keyshortcuts) and in the keydown handler.
+const KEY_MAP = {
+  '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6, '8':7, '9':8,
+  '0':9, 'q':10, 'w':11, 'e':12, 'r':13, 't':14, 'y':15, 'u':16
+};
+
 // ===================== AUDIO ENGINE =====================
 let audioCtx = null;
 let reverbNode = null;
@@ -471,10 +479,15 @@ let dryGain = null;
 
 function getCtx() {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    setupReverb();
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      setupReverb();
+    } catch (e) {
+      console.warn('AudioContext initialization failed:', e);
+      return null;
+    }
   }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
@@ -523,6 +536,7 @@ function setupReverb() {
 
 function playKalimbaNote(freq, velocity = 0.8) {
   const ctx = getCtx();
+  if (!ctx) return; // Graceful degradation if AudioContext is unavailable
   const t = ctx.currentTime;
   const dur = 3;
 
@@ -570,7 +584,10 @@ function playKalimbaNote(freq, velocity = 0.8) {
   g3.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
 
   osc3.connect(g3);
+  // BUGFIX: 3rd harmonic was only connected to dry path; connect to reverb too
+  // for a consistent spatial image (matches fundamental, 2nd harmonic and chorus).
   g3.connect(ctx._masterDry);
+  g3.connect(ctx._masterReverb);
   osc3.start(t);
   osc3.stop(t + 0.6);
 
@@ -613,6 +630,9 @@ function playKalimbaNote(freq, velocity = 0.8) {
   noiseSrc.connect(bp);
   bp.connect(gn);
   gn.connect(ctx._masterDry);
+  // BUGFIX: connect the body-resonance noise burst to the reverb as well, so the
+  // attack transient shares the same spatial depth as the tonal components.
+  gn.connect(ctx._masterReverb);
   noiseSrc.start(t);
   noiseSrc.stop(t + 0.08);
 }
@@ -625,10 +645,11 @@ function vib(pattern) {
 // ===================== BUILD DOM =====================
 const tinesRow = document.getElementById('tinesRow');
 const soundHole = document.getElementById('soundHole');
-const ripple = document.getElementById('ripple');
 const currentNoteEl = document.getElementById('currentNote');
 const noteTrail = document.getElementById('noteTrail');
 const trailClear = document.getElementById('trailClear');
+// NOTE: the static `#ripple` element is no longer used — triggerRipple() now
+// creates a fresh ripple node on each call (see SOUND HOLE RIPPLE section).
 
 const tineElements = [];
 
@@ -639,6 +660,11 @@ TINES.forEach((t, i) => {
   btn.dataset.freq = t.freq;
   btn.dataset.idx = t.idx;
   btn.setAttribute('aria-label', t.note);
+  // BUGFIX: declare aria-pressed up front so screen readers announce state changes correctly.
+  btn.setAttribute('aria-pressed', 'false');
+  // Hint the keyboard shortcut for each tine (1-9, 0, Q-U).
+  const keyHint = Object.keys(KEY_MAP).find(k => KEY_MAP[k] === i);
+  if (keyHint) btn.setAttribute('aria-keyshortcuts', keyHint.toUpperCase());
 
   btn.innerHTML = `
     <div class="tine-bar" style="height:${t.height}px"></div>
@@ -723,15 +749,28 @@ function showCurrentNote(note) {
 }
 
 // ===================== SOUND HOLE RIPPLE =====================
+// BUGFIX: previously triggerRipple() toggled the `animate` class on a single
+// element via remove()/add() with a forced reflow. During fast glissando the
+// class was removed and re-added within the same frame, so the browser often
+// failed to restart the CSS animation. We now recreate the ripple node each
+// time, which guarantees a fresh animation cycle on every note.
+let rippleTimer = null;
 function triggerRipple() {
   soundHole.classList.add('ring');
-  ripple.classList.remove('animate');
-  // Force reflow
-  void ripple.offsetWidth;
-  ripple.classList.add('animate');
-  setTimeout(() => {
+
+  // Remove any existing ripple element
+  const oldRipple = soundHole.querySelector('.sound-hole-ripple');
+  if (oldRipple) oldRipple.remove();
+
+  // Create a fresh ripple element so the CSS animation always starts from scratch
+  const newRipple = document.createElement('div');
+  newRipple.className = 'sound-hole-ripple animate';
+  soundHole.appendChild(newRipple);
+
+  if (rippleTimer) clearTimeout(rippleTimer);
+  rippleTimer = setTimeout(() => {
     soundHole.classList.remove('ring');
-    ripple.classList.remove('animate');
+    if (newRipple.parentNode) newRipple.remove();
   }, 600);
 }
 
@@ -746,10 +785,14 @@ function playNote(tineIdx) {
   // Vibration
   vib(20);
 
-  // Visual: press effect
+  // Visual: press effect + aria-pressed for accessibility
   const el = tineElements[tineIdx];
   el.classList.add('pressed');
-  setTimeout(() => el.classList.remove('pressed'), 200);
+  el.setAttribute('aria-pressed', 'true');
+  setTimeout(() => {
+    el.classList.remove('pressed');
+    el.setAttribute('aria-pressed', 'false');
+  }, 200);
 
   // Sound hole ripple
   triggerRipple();
@@ -842,10 +885,7 @@ tinesRow.addEventListener('mousemove', (e) => {
 });
 
 // ===================== KEYBOARD SUPPORT =====================
-const KEY_MAP = {
-  '1':0, '2':1, '3':2, '4':3, '5':4, '6':5, '7':6, '8':7, '9':8,
-  '0':9, 'q':10, 'w':11, 'e':12, 'r':13, 't':14, 'y':15, 'u':16
-};
+// KEY_MAP is declared in the data section above (used for aria-keyshortcuts too).
 
 document.addEventListener('keydown', (e) => {
   if (e.repeat) return;

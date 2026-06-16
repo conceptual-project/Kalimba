@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kalimba-v1';
+const CACHE_NAME = 'kalimba-v2';
 const ASSETS = [
   './',
   './index.html',
